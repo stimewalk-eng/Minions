@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍌 小黄人语智能翻译官 - Minionese Translator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #FEF08A; /* Soft Yellow */
+            background-image: radial-gradient(#FDE047 1.5px, transparent 1.5px), radial-gradient(#FDE047 1.5px, #FEF08A 1.5px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+        }
+        .font-playful {
+            font-family: 'Fredoka One', 'Noto Sans SC', sans-serif;
+        }
+        /* Custom Minion Shadows and Depth */
+        .minion-card {
+            box-shadow: 0 10px 0px 0px #1E3A8A, 0 15px 30px -10px rgba(0,0,0,0.3);
+        }
+        .minion-btn {
+            box-shadow: 0 4px 0px 0px #1E3A8A;
+            transition: all 0.1s ease;
+        }
+        .minion-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0px 0px #1E3A8A;
+        }
+        /* Banana falling animation */
+        @keyframes fall {
+            0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        .banana-rain {
+            position: absolute;
+            font-size: 24px;
+            pointer-events: none;
+            animation: fall linear forwards;
+            z-index: 10;
+        }
+        /* Minion eye blink animation */
+        @keyframes blink {
+            0%, 90%, 100% { transform: scaleY(1); }
+            95% { transform: scaleY(0.1); }
+        }
+        .minion-eye {
+            animation: blink 4s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12 overflow-x-hidden relative">
+
+    <!-- Rain background container -->
+    <div id="rain-container" class="absolute inset-0 pointer-events-none overflow-hidden z-0"></div>
+
+    <header class="relative z-10 max-w-5xl mx-auto pt-8 px-4 text-center">
+        <!-- Playful Mini-Minion Mascot -->
+        <div class="inline-block relative mb-4 group cursor-pointer" onclick="giggle()">
+            <!-- Yellow Body -->
+            <div class="w-32 h-32 bg-yellow-400 rounded-full border-4 border-blue-900 flex items-center justify-center relative overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-110">
+                <!-- Eye Goggles -->
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-16 h-16 bg-gray-300 border-4 border-blue-950 rounded-full flex items-center justify-center relative z-10">
+                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden">
+                            <div class="w-4 h-4 bg-amber-800 rounded-full relative min-image-pupil flex items-center justify-center minion-eye">
+                                <div class="w-1.5 h-1.5 bg-white rounded-full absolute top-0.5 left-0.5"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Goggle strap -->
+                    <div class="absolute left-0 right-0 h-4 bg-gray-800 border-y-2 border-blue-950 top-1/2 -translate-y-1/2"></div>
+                </div>
+                <!-- Cute Mouth -->
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-8 h-4 border-b-4 border-blue-950 rounded-b-full bg-white group-hover:h-6 transition-all"></div>
+            </div>
+            <!-- Interactive bubble -->
+            <div id="bubble" class="absolute -right-24 top-6 bg-white border-2 border-blue-900 px-3 py-1.5 rounded-2xl text-xs font-bold text-blue-950 shadow-md opacity-0 scale-75 transition-all duration-300 origin-left">
+                Bello! 🍌
+            </div>
+        </div>
+
+        <h1 class="text-4xl md:text-6xl font-black text-blue-950 font-playful tracking-wider drop-shadow-sm mb-2">
+            小黄人语智能翻译官
+        </h1>
+        <p class="text-blue-900 font-medium max-w-xl mx-auto text-sm md:text-base bg-yellow-200/50 backdrop-blur-sm px-4 py-1.5 rounded-full border border-yellow-300/60">
+            🍌 MINIONESE TRANSLATOR • 随身携带的香蕉社交指南 🍌
+        </p>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="max-w-4xl mx-auto mt-8 px-4 relative z-10 flex flex-wrap justify-center gap-2">
+        <button onclick="switchTab('translator')" id="tab-translator" class="px-5 py-3 rounded-2xl font-bold border-2 border-blue-900 minion-btn bg-blue-600 text-white flex items-center gap-2">
+            🔀 智能翻译
+        </button>
+        <button onclick="switchTab('dictionary')" id="tab-dictionary" class="px-5 py-3 rounded-2xl font-bold border-2 border-blue-900 minion-btn bg-yellow-100 text-blue-950 hover:bg-yellow-200 flex items-center gap-2">
+            📖 蕉级大字典
+        </button>
+        <button onclick="switchTab('builder')" id="tab-builder" class="px-5 py-3 rounded-2xl font-bold border-2 border-blue-900 minion-btn bg-yellow-100 text-blue-950 hover:bg-yellow-200 flex items-center gap-2">
+            🧱 创意造句板
+        </button>
+        <button onclick="switchTab('quiz')" id="tab-quiz" class="px-5 py-3 rounded-2xl font-bold border-2 border-blue-900 minion-btn bg-yellow-100 text-blue-950 hover:bg-yellow-200 flex items-center gap-2">
+            🎓 语言力测试
+        </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="max-w-4xl mx-auto mt-6 px-4 relative z-10">
+
+        <!-- SECTION 1: SMART TRANSLATOR -->
+        <section id="section-translator" class="tab-content transition-all duration-300 block">
+            <div class="bg-white rounded-3xl border-4 border-blue-900 p-6 md:p-8 minion-card">
+                <!-- Mode Switcher Header -->
+                <div class="flex items-center justify-between border-b-2 border-dashed border-gray-200 pb-4 mb-6">
+                    <span id="trans-mode-label" class="text-lg font-black text-blue-950 flex items-center gap-2">
+                        🌟 当前模式: <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">人类语 ➔ 小黄人语</span>
+                    </span>
+                    <button onclick="toggleTranslationDirection()" class="bg-yellow-400 hover:bg-yellow-500 border-2 border-blue-900 minion-btn px-4 py-2 rounded-xl text-xs font-black text-blue-950 flex items-center gap-1">
+                        🔄 切换方向
+                    </button>
+                </div>
+
+                <!-- Text Boxes Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Source Box -->
+                    <div class="flex flex-col">
+                        <label id="source-label" class="text-sm font-bold text-gray-600 mb-2">请输入英文或中文：</label>
+                        <div class="relative flex-1">
+                            <textarea id="source-text" class="w-full h-40 p-4 border-2 border-gray-300 focus:border-blue-500 focus:outline-none rounded-2xl text-base text-blue-950 font-medium resize-none" placeholder="输入：我想要香蕉！或者 I want banana..."></textarea>
+                            <button onclick="clearSource()" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600 transition">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Destination Box -->
+                    <div class="flex flex-col">
+                        <label id="dest-label" class="text-sm font-bold text-gray-600 mb-2">小黄人语 (Minionese)：</label>
+                        <div class="relative flex-1 bg-yellow-50/50 border-2 border-yellow-300 rounded-2xl p-4 flex flex-col justify-between min-h-[10rem]">
+                            <div id="dest-text" class="text-lg font-bold text-blue-950 whitespace-pre-wrap leading-relaxed select-all">
+                                Bello! 🍌
+                            </div>
+                            <!-- Meta info & actions -->
+                            <div class="mt-4 pt-3 border-t border-yellow-200/60 flex flex-wrap justify-between items-center gap-2">
+                                <div id="pronunciation-hint" class="text-xs text-amber-700 italic">
+                                    发音提示: 贝洛
+                                </div>
+                                <div class="flex gap-1.5">
+                                    <!-- Speak Button -->
+                                    <button onclick="speakCurrentText()" title="魔性朗读" class="p-2 bg-blue-100 hover:bg-blue-200 border border-blue-900 rounded-xl transition text-blue-900 flex items-center justify-center">
+                                        🔊 <span class="text-xs font-bold ml-1 hidden sm:inline">魔性发音</span>
+                                    </button>
+                                    <!-- Copy Button -->
+                                    <button onclick="copyTranslation()" title="复制翻译" class="p-2 bg-white hover:bg-gray-100 border border-gray-300 rounded-xl transition text-gray-700 flex items-center justify-center">
+                                        📋 <span class="text-xs font-bold ml-1 hidden sm:inline">复制</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Speech Control Config Drawer -->
+                <div class="mt-6 bg-gray-50 rounded-2xl p-4 border-2 border-gray-200">
+                    <h3 class="text-xs font-black text-gray-500 tracking-wider uppercase mb-3 flex items-center gap-1">
+                        🎙️ 声音合成微调
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-gray-600 w-16">高音频率:</span>
+                            <input type="range" id="speech-pitch" min="1.5" max="2.0" step="0.1" value="1.9" class="w-full accent-yellow-500">
+                            <span class="text-xs font-bold text-yellow-600 font-mono">极度尖锐</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-gray-600 w-16">语速快慢:</span>
+                            <input type="range" id="speech-rate" min="1.0" max="1.8" step="0.1" value="1.3" class="w-full accent-yellow-500">
+                            <span class="text-xs font-bold text-yellow-600 font-mono">哒哒哒快</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Sound Buttons -->
+                <div class="mt-6 flex flex-wrap gap-2 justify-center">
+                    <button onclick="playMinionSound('beedo')" class="px-4 py-2 bg-red-500 text-white text-xs font-black rounded-full border-2 border-blue-950 minion-btn hover:bg-red-600">
+                        🚨 Bee-do! (火警)
+                    </button>
+                    <button onclick="playMinionSound('laugh')" class="px-4 py-2 bg-yellow-400 text-blue-950 text-xs font-black rounded-full border-2 border-blue-950 minion-btn hover:bg-yellow-500">
+                        😆 Hehehe! (坏笑)
+                    </button>
+                    <button onclick="playMinionSound('nom')" class="px-4 py-2 bg-green-500 text-white text-xs font-black rounded-full border-2 border-blue-950 minion-btn hover:bg-green-600">
+                        🍌 Nom Nom! (开吃)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: THE DICTIONARY -->
+        <section id="section-dictionary" class="tab-content transition-all duration-300 hidden">
+            <div class="bg-white rounded-3xl border-4 border-blue-900 p-6 md:p-8 minion-card">
+                <!-- Search & Filters -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b-2 border-gray-200">
+                    <div>
+                        <h2 class="text-2xl font-black text-blue-950 flex items-center gap-2">
+                            📖 蕉级百科大字典
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-1">
+                            包含核心语、日常拟声及影视实用句库
+                        </p>
+                    </div>
+                    <div class="relative w-full md:w-64">
+                        <input type="text" id="search-input" oninput="filterDictionary()" class="w-full pl-9 pr-4 py-2.5 border-2 border-gray-300 focus:border-blue-500 focus:outline-none rounded-xl text-sm" placeholder="搜索：香蕉, Bello, love...">
+                        <span class="absolute left-3 top-3 text-gray-400">🔍</span>
+                    </div>
+                </div>
+
+                <!-- Category Tabs -->
+                <div class="flex gap-2 mb-6 overflow-x-auto pb-1.5 scrollbar-thin">
+                    <button onclick="setDictCategory('all')" id="btn-cat-all" class="px-4 py-1.5 text-xs font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-300 shrink-0">
+                        全部数据
+                    </button>
+                    <button onclick="setDictCategory('core')" id="btn-cat-core" class="px-4 py-1.5 text-xs font-bold rounded-full bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200 shrink-0">
+                        第一部分 (核心词汇)
+                    </button>
+                    <button onclick="setDictCategory('onomatopoeia')" id="btn-cat-onomatopoeia" class="px-4 py-1.5 text-xs font-bold rounded-full bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200 shrink-0">
+                        第二部分 (情绪拟声)
+                    </button>
+                    <button onclick="setDictCategory('phrase')" id="btn-cat-phrase" class="px-4 py-1.5 text-xs font-bold rounded-full bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200 shrink-0">
+                        第三部分 (句库)
+                    </button>
+                </div>
+
+                <!-- Table Container -->
+                <div class="overflow-x-auto max-h-[500px] overflow-y-auto border border-gray-200 rounded-2xl">
+                    <table class="w-full border-collapse text-left text-sm">
+                        <thead class="bg-gray-50 sticky top-0 border-b-2 border-gray-200">
+                            <tr>
+                                <th class="p-4 font-black text-blue-950">小黄人语 (Minionese)</th>
+                                <th class="p-4 font-black text-blue-950">英语 (English)</th>
+                                <th class="p-4 font-black text-blue-950">中文意思</th>
+                                <th class="p-4 font-black text-blue-950">发音/可信度</th>
+                                <th class="p-4 font-black text-blue-950 text-center">发声</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dict-table-body" class="divide-y divide-gray-100">
+                            <!-- Dynamic Row Render -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: CREATIVE PHRASE BUILDER -->
+        <section id="section-builder" class="tab-content transition-all duration-300 hidden">
+            <div class="bg-white rounded-3xl border-4 border-blue-900 p-6 md:p-8 minion-card">
+                <h2 class="text-2xl font-black text-blue-950 mb-2">🧱 创意造句积木板</h2>
+                <p class="text-xs text-gray-500 mb-6">点击下方分类积木块，轻松组合一串最地道、最搞怪的小黄人日常语！</p>
+
+                <!-- Sentence Display Screen -->
+                <div class="bg-yellow-50 border-4 border-dashed border-yellow-300 rounded-2xl p-6 mb-6 relative">
+                    <div class="text-xs font-black text-yellow-700 tracking-wider mb-2">组合好的句子:</div>
+                    <div id="built-sentence" class="text-2xl font-black text-blue-950 min-h-[3rem] flex flex-wrap gap-2 items-center">
+                        <span class="text-gray-400 text-sm font-normal">点击下方的木块，在这里拼装你的句子...</span>
+                    </div>
+                    <div id="built-translation" class="mt-4 pt-3 border-t border-yellow-200 text-sm font-bold text-gray-500">
+                        翻译：(暂无组合)
+                    </div>
+
+                    <!-- Clean/Speak actions -->
+                    <div class="absolute right-4 bottom-4 flex gap-2">
+                        <button onclick="clearBuiltSentence()" class="p-2 bg-gray-200 hover:bg-gray-300 rounded-xl text-xs font-bold transition">
+                            🧹 清空
+                        </button>
+                        <button onclick="speakBuiltSentence()" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition">
+                            🔊 朗读
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Building Blocks -->
+                <div class="space-y-6">
+                    <!-- Subjects -->
+                    <div>
+                        <h3 class="text-xs font-black text-blue-950 mb-3 tracking-wider uppercase flex items-center gap-1">
+                            👤 主语 (Who)
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="addBlock('me', '我')" class="px-4 py-2 bg-blue-500 text-white rounded-xl border border-blue-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                me (我)
+                            </button>
+                            <button onclick="addBlock('tu', '你')" class="px-4 py-2 bg-blue-500 text-white rounded-xl border border-blue-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                tu (你)
+                            </button>
+                            <button onclick="addBlock('Boss', '老板')" class="px-4 py-2 bg-blue-500 text-white rounded-xl border border-blue-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                Boss (老板)
+                            </button>
+                            <button onclick="addBlock('amigos', '朋友们')" class="px-4 py-2 bg-blue-500 text-white rounded-xl border border-blue-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                amigos (朋友们)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div>
+                        <h3 class="text-xs font-black text-blue-950 mb-3 tracking-wider uppercase flex items-center gap-1">
+                            ⚡ 动作 (Action)
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="addBlock('want', '想要')" class="px-4 py-2 bg-emerald-500 text-white rounded-xl border border-emerald-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                want (想要)
+                            </button>
+                            <button onclick="addBlock('looka', '看')" class="px-4 py-2 bg-emerald-500 text-white rounded-xl border border-emerald-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                looka (看)
+                            </button>
+                            <button onclick="addBlock('stopa', '停下')" class="px-4 py-2 bg-emerald-500 text-white rounded-xl border border-emerald-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                stopa (停下)
+                            </button>
+                            <button onclick="addBlock('go', '走/冲')" class="px-4 py-2 bg-emerald-500 text-white rounded-xl border border-emerald-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                go (走/冲)
+                            </button>
+                            <button onclick="addBlock('help', '求救/帮助')" class="px-4 py-2 bg-emerald-500 text-white rounded-xl border border-emerald-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                help (求救)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Objects -->
+                    <div>
+                        <h3 class="text-xs font-black text-blue-950 mb-3 tracking-wider uppercase flex items-center gap-1">
+                            🍎 食物与物品 (Object)
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="addBlock('banana', '香蕉')" class="px-4 py-2 bg-amber-400 text-amber-950 rounded-xl border border-amber-600 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                banana (香蕉) 🍌
+                            </button>
+                            <button onclick="addBlock('gelato', '冰淇淋')" class="px-4 py-2 bg-amber-400 text-amber-950 rounded-xl border border-amber-600 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                gelato (冰淇淋) 🍦
+                            </button>
+                            <button onclick="addBlock('papaya', '木瓜')" class="px-4 py-2 bg-amber-400 text-amber-950 rounded-xl border border-amber-600 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                papaya (木瓜) 🍈
+                            </button>
+                            <button onclick="addBlock('potato-na', '土豆')" class="px-4 py-2 bg-amber-400 text-amber-950 rounded-xl border border-amber-600 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                potato-na (土豆) 🥔
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Status / Modifiers -->
+                    <div>
+                        <h3 class="text-xs font-black text-blue-950 mb-3 tracking-wider uppercase flex items-center gap-1">
+                            🤪 状态、语气与连词 (Status)
+                        </h3>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="addBlock('happy', '我很开心')" class="px-4 py-2 bg-purple-500 text-white rounded-xl border border-purple-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                happy (开心的)
+                            </button>
+                            <button onclick="addBlock('sad', '我很伤心')" class="px-4 py-2 bg-purple-500 text-white rounded-xl border border-purple-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                sad (伤心的)
+                            </button>
+                            <button onclick="addBlock('hungry', '我太饿了')" class="px-4 py-2 bg-purple-500 text-white rounded-xl border border-purple-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                hungry (饿坏的)
+                            </button>
+                            <button onclick="addBlock('sleepy', '困困的')" class="px-4 py-2 bg-purple-500 text-white rounded-xl border border-purple-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                sleepy (困了)
+                            </button>
+                            <button onclick="addBlock('para tu', '给你')" class="px-4 py-2 bg-pink-500 text-white rounded-xl border border-pink-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                para tu (给你)
+                            </button>
+                            <button onclick="addBlock('Bello!', '你好!')" class="px-4 py-2 bg-yellow-400 text-blue-950 rounded-xl border border-yellow-600 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                Bello! (你好!)
+                            </button>
+                            <button onclick="addBlock('Bee-do! Bee-do!', '着火啦火警!')" class="px-4 py-2 bg-red-500 text-white rounded-xl border border-red-700 font-bold text-sm hover:scale-105 active:scale-95 transition">
+                                Bee-do! Bee-do! (火警!)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: PROFICIENCY TEST -->
+        <section id="section-quiz" class="tab-content transition-all duration-300 hidden">
+            <div class="bg-white rounded-3xl border-4 border-blue-900 p-6 md:p-8 minion-card">
+                <!-- Quiz Init Panel -->
+                <div id="quiz-start-panel" class="text-center py-8">
+                    <span class="text-5xl">🎓</span>
+                    <h2 class="text-3xl font-black text-blue-950 mt-4 mb-2">香蕉语力超级测试</h2>
+                    <p class="text-gray-600 text-sm max-w-md mx-auto mb-6">
+                        自封为合格的香蕉大军？做完这10道精选挑战，看看你是“香蕉萌新”还是“终极香蕉领袖”吧！
+                    </p>
+                    <button onclick="startQuiz()" class="px-8 py-4 bg-yellow-400 text-blue-950 font-black text-lg rounded-2xl border-2 border-blue-900 minion-btn hover:bg-yellow-500">
+                        🔥 开启测试 !
+                    </button>
+                </div>
+
+                <!-- Quiz Progress Panel -->
+                <div id="quiz-game-panel" class="hidden">
+                    <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-6">
+                        <span class="text-xs font-black text-blue-700 bg-blue-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                            问题 <span id="quiz-index">1</span> / 10
+                        </span>
+                        <span class="text-xs font-black text-amber-700 bg-amber-100 px-3 py-1 rounded-full tracking-wider">
+                            当前得分: <span id="quiz-score">0</span>
+                        </span>
+                    </div>
+
+                    <h3 id="quiz-question" class="text-lg md:text-xl font-black text-blue-950 mb-6 leading-relaxed">
+                        <!-- Dynamic Question -->
+                    </h3>
+
+                    <div class="grid grid-cols-1 gap-3" id="quiz-options">
+                        <!-- Dynamic Options -->
+                    </div>
+
+                    <!-- Progress bar -->
+                    <div class="w-full bg-gray-100 rounded-full h-2.5 mt-8 overflow-hidden">
+                        <div id="quiz-progress-bar" class="bg-yellow-400 h-2.5 rounded-full transition-all duration-300" style="width: 10%"></div>
+                    </div>
+                </div>
+
+                <!-- Quiz End Result -->
+                <div id="quiz-end-panel" class="hidden text-center py-8">
+                    <div class="text-6xl mb-4" id="quiz-result-emoji">🏆</div>
+                    <h2 class="text-3xl font-black text-blue-950 mb-2">测试完成！</h2>
+                    <p class="text-lg text-gray-700 font-bold">你的终极评分是: <span id="quiz-final-score" class="text-blue-600 text-2xl font-black">100</span> 分</p>
+                    <div class="inline-block bg-yellow-100 border-2 border-yellow-400 rounded-2xl px-6 py-3 my-4">
+                        <div class="text-xs text-amber-800 font-bold uppercase tracking-widest">斩获荣誉称号</div>
+                        <div class="text-2xl font-black text-amber-950 mt-1" id="quiz-badge">终极香蕉领袖</div>
+                    </div>
+                    <p class="text-gray-500 text-xs max-w-sm mx-auto" id="quiz-result-desc">
+                        哇哦！你对小黄人语的理解已经神乎其技，格鲁老板都要退避三舍！
+                    </p>
+                    <div class="mt-6 flex gap-3 justify-center">
+                        <button onclick="startQuiz()" class="px-6 py-3 bg-yellow-400 text-blue-950 font-black rounded-xl border-2 border-blue-900 minion-btn hover:bg-yellow-500 text-sm">
+                            🔄 重新测试
+                        </button>
+                        <button onclick="switchTab('translator')" class="px-6 py-3 bg-blue-600 text-white font-black rounded-xl border-2 border-blue-900 minion-btn hover:bg-blue-700 text-sm">
+                            🔀 回去翻译
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Custom Floating Alert Modal -->
+    <div id="alert-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white rounded-3xl border-4 border-blue-900 p-6 max-w-xs text-center minion-card transform scale-90 transition-all duration-300" id="alert-content">
+            <div class="text-4xl mb-2" id="alert-icon">🍌</div>
+            <p class="text-blue-950 font-black text-lg mb-4" id="alert-text">提示信息</p>
+            <button onclick="closeAlert()" class="px-5 py-2 bg-yellow-400 text-blue-950 font-black rounded-xl border-2 border-blue-900 minion-btn text-sm">
+                知道啦！
+            </button>
+        </div>
+    </div>
+
+    <!-- Script Section -->
+    <script>
+        // Dictionary Database compiled from the provided document
+        const DICTIONARY = [
+            // Core words
+            { minion: "Bello!", english: "Hello!", chinese: "你好！", pinyin: "贝洛", reliability: "高", type: "core", desc: "最经典的见面招呼；语气越高越兴奋。" },
+            { minion: "Poopaye!", english: "Goodbye! / Bye!", chinese: "再见！", pinyin: "噗帕耶", reliability: "高", type: "core", desc: "常见告别语。" },
+            { minion: "Tank yu!", english: "Thank you!", chinese: "谢谢！", pinyin: "坦克·呦", reliability: "高", type: "core", desc: "英语 thank you 的小黄人式发音。" },
+            { minion: "Para tu", english: "For you", chinese: "给你的 / 为你", pinyin: "帕拉·图", reliability: "高", type: "core", desc: "来自西班牙语，可递礼物时说。" },
+            { minion: "Me want banana!", english: "I want a banana / I’m hungry!", chinese: "我想要香蕉！/ 我饿了！", pinyin: "米·旺特·巴纳纳", reliability: "高", type: "core", desc: "字面是要香蕉，也常用来表达饿。" },
+            { minion: "Banana!", english: "Banana!", chinese: "香蕉！", pinyin: "巴纳纳", reliability: "高", type: "core", desc: "食物名，也可作兴奋感叹。" },
+            { minion: "Potato-na!", english: "Potato!", chinese: "土豆！", pinyin: "坡泰托纳", reliability: "中", type: "core", desc: "食物式喊法；尾音可拉长。" },
+            { minion: "Gelato!", english: "Ice cream!", chinese: "冰淇淋！", pinyin: "杰拉托", reliability: "高", type: "core", desc: "直接借用意大利语。" },
+            { minion: "Papaya!", english: "Papaya!", chinese: "木瓜！", pinyin: "帕帕雅", reliability: "高", type: "core", desc: "常被拿来押韵或夸人。" },
+            { minion: "Bapple / Babble", english: "Apple", chinese: "苹果", pinyin: "巴普尔 / 巴波", reliability: "中", type: "core", desc: "网络转写不统一，可能是 apple 的变体。" },
+            { minion: "Tulaliloo ti amo", english: "We love you / I love you", chinese: "我们爱你 / 我爱你", pinyin: "图拉里噜·提阿莫", reliability: "高", type: "core", desc: "前半由即兴，后半来自意大利语 ti amo；常用于深情或搞笑表白。" },
+            { minion: "Muak muak muak!", english: "Kiss kiss kiss!", chinese: "亲亲亲！", pinyin: "木啊木啊木啊", reliability: "高", type: "core", desc: "亲吻拟声。" },
+            { minion: "Bee-do! Bee-do!", english: "Fire! / Emergency!", chinese: "着火了！/ 紧急情况！", pinyin: "哔嘟·哔嘟", reliability: "高", type: "core", desc: "模仿警报器；著名的消防警报喊法。" },
+            { minion: "Underwear!", english: "I swear! / Underwear!", chinese: "我发誓！/ 内裤！", pinyin: "安德维尔", reliability: "中", type: "core", desc: "笑点依赖英语谐音，具体意思看场景。" },
+            { minion: "Bananonina!", english: "Ugly!", chinese: "难看！/ 丑！", pinyin: "巴纳诺妮娜", reliability: "中", type: "core", desc: "常见宣传词表中的戏谑评价。" },
+            { minion: "La boda", english: "The wedding", chinese: "婚礼", pinyin: "拉·博达", reliability: "高", type: "core", desc: "来自西班牙语。" },
+            { minion: "Kampai!", english: "Cheers!", chinese: "干杯！", pinyin: "康拜", reliability: "高", type: "core", desc: "来自日语“乾杯”。" },
+            { minion: "Terima kasih", english: "Thank you", chinese: "谢谢", pinyin: "特里马·卡西", reliability: "高", type: "core", desc: "来自印度尼西亚语/马来语。" },
+            { minion: "Hai!", english: "Yes! / Okay!", chinese: "是！/ 好！", pinyin: "嗨", reliability: "中", type: "core", desc: "可对应日语“はい”，也可能只是欢呼。" },
+            { minion: "Sí!", english: "Yes!", chinese: "是！", pinyin: "西", reliability: "高", type: "core", desc: "来自西班牙语。" },
+            { minion: "No!", english: "No!", chinese: "不！", pinyin: "诺", reliability: "高", type: "core", desc: "多种语言通用。" },
+            { minion: "Okay!", english: "Okay!", chinese: "好的！", pinyin: "欧凯", reliability: "高", type: "core", desc: "直接借用英语。" },
+            { minion: "Stopa!", english: "Stop!", chinese: "停下！", pinyin: "斯托帕", reliability: "中", type: "core", desc: "stop 的夸张变体。" },
+            { minion: "Looka!", english: "Look!", chinese: "看！", pinyin: "卢卡", reliability: "中", type: "core", desc: "look 的夸张变体。" },
+            { minion: "Come on!", english: "Come on!", chinese: "快点！/ 来吧！", pinyin: "卡姆昂", reliability: "高", type: "core", desc: "直接借用英语。" },
+            { minion: "Go! Go! Go!", english: "Go!", chinese: "冲！快走！", pinyin: "够够够", reliability: "高", type: "core", desc: "行动、逃跑或比赛时使用。" },
+            { minion: "Help!", english: "Help!", chinese: "救命！/ 帮帮我！", pinyin: "海尔普", reliability: "高", type: "core", desc: "直接借用英语。" },
+            { minion: "Boss!", english: "Boss!", chinese: "老板！", pinyin: "博斯", reliability: "高", type: "core", desc: "称呼格鲁或当前主人。" },
+            { minion: "Amigo!", english: "Friend!", chinese: "朋友！", pinyin: "阿米戈", reliability: "高", type: "core", desc: "来自西班牙语。" },
+            { minion: "Compadre!", english: "Buddy! / Pal!", chinese: "兄弟！/ 伙伴！", pinyin: "孔帕德雷", reliability: "中", type: "core", desc: "来自西班牙语，语气亲热。" },
+            { minion: "Tu le bella", english: "You are beautiful", chinese: "你很漂亮", pinyin: "图·勒·贝拉", reliability: "中", type: "core", desc: "混合式表达；bella 来自意大利语。" },
+
+            // Onomatopoeia
+            { minion: "Whaaa?!", english: "What?!", chinese: "什么？！", pinyin: "哇——", reliability: "拟声", type: "onomatopoeia", desc: "惊讶或不敢相信。" },
+            { minion: "Hehehe!", english: "Hehehe!", chinese: "嘿嘿嘿！", pinyin: "嘿嘿嘿", reliability: "拟声", type: "onomatopoeia", desc: "恶作剧得逞。" },
+            { minion: "Muahaha!", english: "Evil laugh!", chinese: "坏蛋式大笑！", pinyin: "姆哈哈", reliability: "拟声", type: "onomatopoeia", desc: "模仿反派。" },
+            { minion: "Ouch!", english: "Ouch!", chinese: "哎哟！", pinyin: "奥池", reliability: "拟声", type: "onomatopoeia", desc: "碰撞、夹到或摔倒。" },
+            { minion: "Uh-oh!", english: "Uh-oh!", chinese: "糟糕！", pinyin: "啊哦", reliability: "拟声", type: "onomatopoeia", desc: "发现闯祸。" },
+            { minion: "Ta-da!", english: "Ta-da!", chinese: "当当！", pinyin: "塔达", reliability: "拟声", type: "onomatopoeia", desc: "展示成果。" },
+            { minion: "Nom nom!", english: "Yum / eating sound", chinese: "真香 / 吃东西声", pinyin: "弄弄", reliability: "拟声", type: "onomatopoeia", desc: "狼吞虎咽。" },
+            { minion: "Wakey wakey!", english: "Wake up!", chinese: "起床啦！", pinyin: "维基维基", reliability: "拟声", type: "onomatopoeia", desc: "叫醒伙伴。" },
+
+            // Phrases
+            { minion: "Bello, amigo!", english: "Hello, friend!", chinese: "你好，朋友！", pinyin: "贝洛，阿米戈", reliability: "组合", type: "phrase", desc: "常用问候语。" },
+            { minion: "Poopaye, amigo!", english: "Goodbye, friend!", chinese: "再见，朋友！", pinyin: "噗帕耶，阿米戈", reliability: "组合", type: "phrase", desc: "温暖的告别词。" },
+            { minion: "Para tu, banana!", english: "A banana for you!", chinese: "香蕉给你！", pinyin: "帕拉·图，巴纳纳", reliability: "组合", type: "phrase", desc: "最真诚的送礼。" },
+            { minion: "Kampai, amigos!", english: "Cheers, friends!", chinese: "朋友们，干杯！", pinyin: "康拜，阿米戈斯", reliability: "组合", type: "phrase", desc: "聚会必备。" },
+            { minion: "Stopa! Banana danger!", english: "Stop! Banana danger!", chinese: "停下！香蕉有危险！", pinyin: "斯托帕！巴纳纳 丹吉尔", reliability: "组合", type: "phrase", desc: "高级警报场景。" },
+            { minion: "Looka, Boss!", english: "Look, Boss!", chinese: "老板，快看！", pinyin: "卢卡，博斯", reliability: "组合", type: "phrase", desc: "向格鲁展示新奇物。" },
+            { minion: "Go go go, amigos!", english: "Go, friends, go!", chinese: "朋友们，冲冲冲！", pinyin: "够够够，阿米戈斯", reliability: "组合", type: "phrase", desc: "行动号召。" },
+            { minion: "Shhh, Boss sleeping.", english: "Shh, the Boss is sleeping.", chinese: "嘘，老板在睡觉。", pinyin: "嘘，博斯 斯利拼", reliability: "组合", type: "phrase", desc: "小心翼翼。" },
+            { minion: "No banana? Whaaa?!", english: "No bananas? What?!", chinese: "没有香蕉？什么？！", pinyin: "诺 巴纳纳？哇", reliability: "组合", type: "phrase", desc: "极其震惊的时刻。" },
+            { minion: "Banana gone!", english: "The banana is gone!", chinese: "香蕉不见了！", pinyin: "巴纳纳 刚", reliability: "组合", type: "phrase", desc: "绝望时刻。" },
+            { minion: "Boss coming!", english: "The Boss is coming!", chinese: "老板来了！", pinyin: "博斯 康敏", reliability: "组合", type: "phrase", desc: "紧急整队号角。" },
+            { minion: "Go banana mission!", english: "Start the banana mission!", chinese: "开始香蕉任务！", pinyin: "够 巴纳纳 密神", reliability: "组合", type: "phrase", desc: "启动最高指令。" },
+            { minion: "Mission completo!", english: "Mission complete!", chinese: "任务完成！", pinyin: "密神 康普利托", reliability: "组合", type: "phrase", desc: "欢庆凯旋。" },
+            { minion: "Banana secured!", english: "The banana is safe!", chinese: "香蕉安全了！", pinyin: "巴纳纳 塞丘尔德", reliability: "组合", type: "phrase", desc: "大局已定。" },
+            { minion: "All gooda!", english: "Everything is okay!", chinese: "一切正常！", pinyin: "奥 骨达", reliability: "组合", type: "phrase", desc: "报告安全。" }
+        ];
+
+        // Bidirectional mapping lookup dictionaries (lowercased for flexibility)
+        const wordMapToMinion = {
+            "hello": "Bello!",
+            "hi": "Bello!",
+            "goodbye": "Poopaye!",
+            "bye": "Poopaye!",
+            "thank you": "Tank yu!",
+            "thanks": "Tank yu!",
+            "you": "tu",
+            "i": "me",
+            "me": "me",
+            "friend": "amigo",
+            "friends": "amigos",
+            "boss": "Boss",
+            "banana": "banana!",
+            "potato": "potato-na!",
+            "ice cream": "gelato!",
+            "papaya": "papaya!",
+            "apple": "bapple",
+            "yes": "sí!",
+            "no": "no!",
+            "stop": "stopa!",
+            "look": "looka!",
+            "fire": "Bee-do! Bee-do!",
+            "emergency": "Bee-do! Bee-do!",
+            "beautiful": "bella",
+            "pretty": "bella",
+            "ugly": "bananonina!",
+            "wedding": "la boda",
+            "cheers": "Kampai!",
+            "love": "ti amo",
+            "happy": "happy",
+            "sad": "sad",
+            "scared": "scared",
+            "hungry": "hungry",
+            "sleepy": "sleepy",
+            "quick": "rapido",
+            "slow": "lento",
+            "open": "opena",
+            "close": "closa",
+            "run": "run-a"
+        };
+
+        const chineseToMinion = {
+            "你好": "Bello!",
+            "再见": "Poopaye!",
+            "拜拜": "Poopaye!",
+            "谢谢": "Tank yu!",
+            "感谢": "Tank yu!",
+            "你": "tu",
+            "我": "me",
+            "朋友": "amigo",
+            "伙伴": "amigo",
+            "兄弟": "compadre!",
+            "老板": "Boss",
+            "格鲁": "Boss",
+            "香蕉": "banana!",
+            "土豆": "potato-na!",
+            "冰淇淋": "gelato!",
+            "木瓜": "papaya!",
+            "苹果": "bapple",
+            "是": "sí!",
+            "对": "sí!",
+            "不": "no!",
+            "停": "stopa!",
+            "别": "no!",
+            "看": "looka!",
+            "救命": "help!",
+            "着火": "Bee-do! Bee-do!",
+            "紧急": "Bee-do! Bee-do!",
+            "漂亮": "bella",
+            "美": "bella",
+            "丑": "bananonina!",
+            "婚礼": "la boda",
+            "干杯": "Kampai!",
+            "爱": "ti amo",
+            "开心": "happy",
+            "难过": "sad",
+            "伤心": "sad",
+            "害怕": "scared",
+            "饿": "hungry",
+            "困": "sleepy",
+            "快": "rapido",
+            "慢": "lento",
+            "打开": "opena",
+            "关上": "closa",
+            "跑": "run-a"
+        };
+
+        // State variables
+        let translationDirection = 'human-to-minion'; // or 'minion-to-human'
+        let currentDictCategory = 'all';
+        let builtSentenceList = [];
+
+        // App Initialization
+        window.onload = function() {
+            renderDictionary();
+            initQuizData();
+
+            // Set up dynamic auto-translate on source text change
+            document.getElementById('source-text').addEventListener('input', debounce(performTranslation, 300));
+        };
+
+        // Helper: Debounce for fast typists
+        function debounce(func, wait) {
+            let timeout;
+            return function() {
+                const context = this, args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+        }
+
+        // Tab Swapping
+        function switchTab(tabId) {
+            const tabs = ['translator', 'dictionary', 'builder', 'quiz'];
+            tabs.forEach(t => {
+                const element = document.getElementById(`section-${t}`);
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tabId) {
+                    element.classList.remove('hidden');
+                    element.classList.add('block');
+                    btn.className = "px-5 py-3 rounded-2xl font-bold border-2 border-blue-900 minion-btn bg-blue-600 text-white flex items-center gap-2";
+                } else {
+                    element.classList.remove('block');
+                    element.classList.add('hidden');
+                    btn.className = "px-5 py-3 rounded-2xl font-bold border-2 border-blue-900 minion-btn bg-yellow-100 text-blue-950 hover:bg-yellow-200 flex items-center gap-2";
+                }
+            });
+            giggle();
+        }
+
+        // UI Giggle animation & sound trigger
+        function giggle() {
+            const bubble = document.getElementById('bubble');
+            const funnyPhrases = ["Bello! 🍌", "Bananaaa! 🍌", "Para Tu! 🎁", "Hehehe! 😆", "Poopaye! 👋", "Bee-do! 🚨"];
+            bubble.innerText = funnyPhrases[Math.floor(Math.random() * funnyPhrases.length)];
+            bubble.classList.remove('opacity-0', 'scale-75');
+            bubble.classList.add('opacity-100', 'scale-100');
+
+            // Quick synthetic beep sound
+            playBeep(220 + Math.random() * 400, 0.1);
+
+            setTimeout(() => {
+                bubble.classList.add('opacity-0', 'scale-75');
+                bubble.classList.remove('opacity-100', 'scale-100');
+            }, 1200);
+
+            // Make background rain some bananas
+            createBananaRain();
+        }
+
+        function createBananaRain() {
+            const container = document.getElementById('rain-container');
+            for(let i=0; i<15; i++) {
+                const banana = document.createElement('div');
+                banana.className = 'banana-rain';
+                banana.innerText = Math.random() > 0.5 ? '🍌' : '🍦';
+                banana.style.left = Math.random() * 100 + 'vw';
+                banana.style.animationDuration = (2 + Math.random() * 3) + 's';
+                banana.style.fontSize = (16 + Math.random() * 24) + 'px';
+                container.appendChild(banana);
+
+                // Cleanup
+                setTimeout(() => {
+                    banana.remove();
+                }, 5000);
+            }
+        }
+
+        // Web Audio Synthesizer for retro playful sounds
+        let audioCtx = null;
+        function playBeep(frequency, duration) {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.type = 'triangle'; // cute warm sound
+                oscillator.frequency.value = frequency;
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                // Audio synthesis not supported or blocked by sandbox
+            }
+        }
+
+        function playMinionSound(type) {
+            if (type === 'beedo') {
+                playBeep(660, 0.2);
+                setTimeout(() => playBeep(520, 0.2), 200);
+                setTimeout(() => playBeep(660, 0.2), 400);
+                setTimeout(() => playBeep(520, 0.2), 600);
+                triggerToastAlert("🚨 Bee-do! Bee-do! 警报拉响！", "🚨");
+            } else if (type === 'laugh') {
+                playBeep(880, 0.1);
+                setTimeout(() => playBeep(1000, 0.1), 100);
+                setTimeout(() => playBeep(880, 0.1), 200);
+                setTimeout(() => playBeep(1100, 0.1), 300);
+                triggerToastAlert("😆 Hehehe! 恶作剧得逞！", "😆");
+            } else if (type === 'nom') {
+                playBeep(400, 0.15);
+                setTimeout(() => playBeep(450, 0.15), 150);
+                setTimeout(() => playBeep(350, 0.2), 300);
+                triggerToastAlert("🍌 Nom Nom! 香蕉太美味了！", "😋");
+            }
+        }
+
+        // Dynamic Translation Engine
+        function toggleTranslationDirection() {
+            const label = document.getElementById('trans-mode-label');
+            const sourceLabel = document.getElementById('source-label');
+            const destLabel = document.getElementById('dest-label');
+            const sourceText = document.getElementById('source-text');
+
+            if (translationDirection === 'human-to-minion') {
+                translationDirection = 'minion-to-human';
+                label.innerHTML = '🌟 当前模式: <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm">小黄人语 ➔ 人类语</span>';
+                sourceLabel.innerText = '请输入小黄人语 (Minionese)：';
+                destLabel.innerText = '翻译结果 (中文 & 英文)：';
+                sourceText.placeholder = '输入：Bello, amigo! 或者 Tu le bella...';
+            } else {
+                translationDirection = 'human-to-minion';
+                label.innerHTML = '🌟 当前模式: <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">人类语 ➔ 小黄人语</span>';
+                sourceLabel.innerText = '请输入英文或中文：';
+                destLabel.innerText = '小黄人语 (Minionese)：';
+                sourceText.placeholder = '输入：我想要香蕉！或者 I want banana...';
+            }
+            sourceText.value = '';
+            document.getElementById('dest-text').innerText = 'Bello! 🍌';
+            document.getElementById('pronunciation-hint').innerText = '发音提示: 贝洛';
+        }
+
+        function performTranslation() {
+            const text = document.getElementById('source-text').value.trim();
+            const destBox = document.getElementById('dest-text');
+            const pronHint = document.getElementById('pronunciation-hint');
+
+            if (!text) {
+                destBox.innerText = '...';
+                pronHint.innerText = '';
+                return;
+            }
+
+            if (translationDirection === 'human-to-minion') {
+                // Translate English or Chinese into Minionese
+                const result = translateToMinionese(text);
+                destBox.innerText = result.minion;
+                pronHint.innerText = result.pinyin ? `发音提示: ${result.pinyin}` : '';
+            } else {
+                // Translate Minionese to English/Chinese
+                const result = translateFromMinionese(text);
+                destBox.innerText = result;
+                pronHint.innerText = '可信度: 高 (电影真实借词/常见组合)';
+            }
+        }
+
+        // Helper: English/Chinese -> Minionese Matcher with fun procedural rule backup
+        function translateToMinionese(input) {
+            // First check complete sentence matches from our database
+            const matchedPhrase = DICTIONARY.find(d => 
+                d.english.toLowerCase().replace(/[!.?,]/g, '') === input.toLowerCase().replace(/[!.?,]/g, '') ||
+                d.chinese.replace(/[！。？，]/g, '') === input.replace(/[！。？，]/g, '')
+            );
+
+            if (matchedPhrase) {
+                return { minion: matchedPhrase.minion, pinyin: matchedPhrase.pinyin };
+            }
+
+            // Word-by-word matching
+            const words = input.toLowerCase().split(/\s+/);
+            const minionWords = [];
+            const pinyins = [];
+
+            // A tiny procedural system for non-dictionary words to make them sound hilarious
+            words.forEach(word => {
+                // Remove punctuation for clean match
+                const cleanWord = word.replace(/[!.?,]/g, '');
+                let minWord = null;
+
+                // 1. Direct english dictionary check
+                if (wordMapToMinion[cleanWord]) {
+                    minWord = wordMapToMinion[cleanWord];
+                } 
+                // 2. Direct Chinese character map check
+                else {
+                    for (let zhKey in chineseToMinion) {
+                        if (cleanWord.includes(zhKey)) {
+                            minWord = chineseToMinion[zhKey];
+                            break;
+                        }
+                    }
+                }
+
+                // 3. Fallback: Procedurally "Minionize" the unmatched word
+                if (!minWord) {
+                    if (cleanWord.length > 2) {
+                        // English rule: add trailing "-a", repeat vowel
+                        if (/^[a-zA-Z]+$/.test(cleanWord)) {
+                            minWord = cleanWord.replace(/([aeiou])([a-z]+)/i, '$1$1$2') + "-a";
+                        } else {
+                            // Chinese rule: generate wacky sound or grab random food word
+                            const fillers = ["nom", "baba", "papo", "gela", "tulali"];
+                            minWord = fillers[Math.floor(Math.random() * fillers.length)] + "-na";
+                        }
+                    } else {
+                        minWord = cleanWord;
+                    }
+                }
+
+                // Add original punctuation back if present
+                const lastChar = word.slice(-1);
+                if (['!', '?', '.', ','].includes(lastChar)) {
+                    minWord += lastChar;
+                }
+
+                minionWords.push(minWord);
+
+                // Try to find a pronunciation in database to append to hint
+                const matchObj = DICTIONARY.find(d => d.minion.toLowerCase().replace(/[!.?,]/g, '') === minWord.toLowerCase().replace(/[!.?,]/g, ''));
+                if (matchObj && matchObj.pinyin) {
+                    pinyins.push(matchObj.pinyin);
+                }
+            });
+
+            // Make sure the first word starts capitalized
+            let outputText = minionWords.join(' ');
+            outputText = outputText.charAt(0).toUpperCase() + outputText.slice(1);
+
+            return {
+                minion: outputText,
+                pinyin: pinyins.length > 0 ? pinyins.join(' · ') : '自主合成发音 (听天由命吧!)'
+            };
+        }
+
+        // Helper: Minionese -> English/Chinese Translation with structural analysis
+        function translateFromMinionese(input) {
+            const cleanInput = input.trim().toLowerCase().replace(/[!.?,]/g, '');
+
+            // Try exact phrase matching
+            const matched = DICTIONARY.find(d => d.minion.toLowerCase().replace(/[!.?,]/g, '') === cleanInput);
+            if (matched) {
+                return `【中文】${matched.chinese}\n【English】${matched.english}`;
+            }
+
+            // Word-by-word decomposition
+            const tokens = input.split(/\s+/);
+            const zhOutputs = [];
+            const enOutputs = [];
+
+            tokens.forEach(tok => {
+                const cleanTok = tok.toLowerCase().replace(/[!.?,]/g, '');
+                const matchObj = DICTIONARY.find(d => d.minion.toLowerCase().replace(/[!.?,]/g, '') === cleanTok);
+
+                if (matchObj) {
+                    zhOutputs.push(matchObj.chinese.replace(/[！。？，]/g, ''));
+                    enOutputs.push(matchObj.english.replace(/[!.?,]/g, ''));
+                } else {
+                    // Try inverse lookup in manual word dictionaries
+                    let found = false;
+                    for (let key in wordMapToMinion) {
+                        if (wordMapToMinion[key].toLowerCase().replace(/[!.?,]/g, '') === cleanTok) {
+                            zhOutputs.push(key);
+                            enOutputs.push(key);
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        // Unmatched mysterious words are represented as-is
+                        zhOutputs.push(`[神秘小黄人语: ${tok}]`);
+                        enOutputs.push(tok);
+                    }
+                }
+            });
+
+            return `【译文】${zhOutputs.join(' ')}\n【English】${enOutputs.join(' ')}`;
+        }
+
+        // Actions
+        function clearSource() {
+            document.getElementById('source-text').value = '';
+            document.getElementById('dest-text').innerText = '...';
+            document.getElementById('pronunciation-hint').innerText = '';
+        }
+
+        function copyTranslation() {
+            const val = document.getElementById('dest-text').innerText;
+            if (val === '...' || !val) return;
+
+            // Safe clipboard copy
+            const el = document.createElement('textarea');
+            el.value = val;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            triggerToastAlert("🎉 翻译结果已成功复制到剪贴板！", "📋");
+        }
+
+        // Magical Speech Reader using HTML5 SpeechSynthesis API
+        function speakCurrentText() {
+            const textToSpeak = document.getElementById('dest-text').innerText;
+            if (!textToSpeak || textToSpeak === '...') {
+                triggerToastAlert("请输入有效内容后再进行朗读哦！", "⚠️");
+                return;
+            }
+
+            // Parse out the translated text if it contains Chinese headers
+            let cleanText = textToSpeak;
+            if (textToSpeak.includes('【')) {
+                cleanText = textToSpeak.split('\n')[0].replace('【中文】', '').replace('【译文】', '');
+            }
+
+            speakTextWithPitch(cleanText);
+        }
+
+        function speakTextWithPitch(text) {
+            if ('speechSynthesis' in window) {
+                // Cancel any ongoing speech
+                window.speechSynthesis.cancel();
+
+                // Build modern synthetic Minion voice: High Pitch, Fast Rate
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // Read Minionese using Romance language or English accents for best results
+                utterance.lang = 'en-US'; 
+
+                // Custom settings from sliders
+                const pitchVal = parseFloat(document.getElementById('speech-pitch').value);
+                const rateVal = parseFloat(document.getElementById('speech-rate').value);
+
+                utterance.pitch = pitchVal; // Highly squeaky pitch (default 1.9)
+                utterance.rate = rateVal;  // Fast excited chatter (default 1.3)
+                utterance.volume = 1.0;
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                triggerToastAlert("您的浏览器不支持 Web Speech API，无法进行语音朗读。", "❌");
+            }
+        }
+
+        // Custom Modal Toast
+        function triggerToastAlert(msg, icon = "🍌") {
+            const modal = document.getElementById('alert-modal');
+            const alertContent = document.getElementById('alert-content');
+            document.getElementById('alert-icon').innerText = icon;
+            document.getElementById('alert-text').innerText = msg;
+
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            alertContent.classList.remove('scale-90');
+            modal.classList.add('opacity-100');
+            alertContent.classList.add('scale-100');
+        }
+
+        function closeAlert() {
+            const modal = document.getElementById('alert-modal');
+            const alertContent = document.getElementById('alert-content');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            alertContent.classList.add('scale-90');
+            modal.classList.remove('opacity-100');
+            alertContent.classList.remove('scale-100');
+        }
+
+        // SECTION 2: DICTIONARY MANAGEMENT
+        function renderDictionary() {
+            const tbody = document.getElementById('dict-table-body');
+            tbody.innerHTML = '';
+
+            const filtered = DICTIONARY.filter(item => {
+                if (currentDictCategory === 'all') return true;
+                return item.type === currentDictCategory;
+            });
+
+            filtered.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-yellow-50/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-4 font-black text-blue-950">${item.minion}</td>
+                    <td class="p-4 font-medium text-gray-600">${item.english}</td>
+                    <td class="p-4 font-bold text-gray-800">${item.chinese}</td>
+                    <td class="p-4 text-xs">
+                        <span class="block text-amber-800 font-mono">🗣️ ${item.pinyin}</span>
+                        <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                            item.reliability === '高' ? 'bg-green-100 text-green-700' :
+                            item.reliability === '中' ? 'bg-amber-100 text-amber-700' :
+                            item.reliability === '拟声' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                        }">信度: ${item.reliability}</span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="speakTextWithPitch('${item.minion}')" class="p-1.5 bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 rounded-lg transition text-yellow-800 text-xs">
+                            🔊 播音
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function setDictCategory(cat) {
+            currentDictCategory = cat;
+            const cats = ['all', 'core', 'onomatopoeia', 'phrase'];
+            cats.forEach(c => {
+                const btn = document.getElementById(`btn-cat-${c}`);
+                if (c === cat) {
+                    btn.className = "px-4 py-1.5 text-xs font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-300 shrink-0";
+                } else {
+                    btn.className = "px-4 py-1.5 text-xs font-bold rounded-full bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200 shrink-0";
+                }
+            });
+            renderDictionary();
+        }
+
+        function filterDictionary() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const tbody = document.getElementById('dict-table-body');
+            tbody.innerHTML = '';
+
+            const filtered = DICTIONARY.filter(item => {
+                const matchesCategory = (currentDictCategory === 'all' || item.type === currentDictCategory);
+                const matchesSearch = (
+                    item.minion.toLowerCase().includes(query) ||
+                    item.english.toLowerCase().includes(query) ||
+                    item.chinese.includes(query) ||
+                    item.pinyin.includes(query)
+                );
+                return matchesCategory && matchesSearch;
+            });
+
+            filtered.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-yellow-50/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-4 font-black text-blue-950">${item.minion}</td>
+                    <td class="p-4 font-medium text-gray-600">${item.english}</td>
+                    <td class="p-4 font-bold text-gray-800">${item.chinese}</td>
+                    <td class="p-4 text-xs">
+                        <span class="block text-amber-800 font-mono">🗣️ ${item.pinyin}</span>
+                        <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                            item.reliability === '高' ? 'bg-green-100 text-green-700' :
+                            item.reliability === '中' ? 'bg-amber-100 text-amber-700' :
+                            item.reliability === '拟声' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                        }">信度: ${item.reliability}</span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <button onclick="speakTextWithPitch('${item.minion}')" class="p-1.5 bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 rounded-lg transition text-yellow-800 text-xs">
+                            🔊 播音
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // SECTION 3: CREATIVE PHRASE BUILDER ENGINE
+        function addBlock(minionWord, cnTranslation) {
+            const screen = document.getElementById('built-sentence');
+            const translationBox = document.getElementById('built-translation');
+
+            // Remove placeholder if it's the first block
+            if (builtSentenceList.length === 0) {
+                screen.innerHTML = '';
+            }
+
+            // Create tag element
+            const tag = document.createElement('span');
+            tag.className = "px-3 py-1.5 bg-yellow-400 border border-blue-900 rounded-xl font-bold text-sm text-blue-950 shadow flex items-center gap-1.5 animate-bounce-short";
+            tag.innerHTML = `
+                ${minionWord}
+                <button onclick="removeBlock(this, '${minionWord}')" class="text-xs text-red-700 hover:text-red-900 font-bold ml-1">✕</button>
+            `;
+
+            screen.appendChild(tag);
+            builtSentenceList.push({ minion: minionWord, cn: cnTranslation });
+            updateBuiltTranslation();
+
+            // Squeak sound effect
+            playBeep(300 + Math.random() * 200, 0.1);
+        }
+
+        function removeBlock(btn, minionWord) {
+            const tag = btn.parentElement;
+            tag.remove();
+
+            // Find index and remove
+            const idx = builtSentenceList.findIndex(b => b.minion === minionWord);
+            if (idx > -1) {
+                builtSentenceList.splice(idx, 1);
+            }
+
+            updateBuiltTranslation();
+
+            if (builtSentenceList.length === 0) {
+                document.getElementById('built-sentence').innerHTML = `<span class="text-gray-400 text-sm font-normal">点击下方的木块，在这里拼装你的句子...</span>`;
+                document.getElementById('built-translation').innerText = '翻译：(暂无组合)';
+            }
+        }
+
+        function clearBuiltSentence() {
+            builtSentenceList = [];
+            document.getElementById('built-sentence').innerHTML = `<span class="text-gray-400 text-sm font-normal">点击下方的木块，在这里拼装你的句子...</span>`;
+            document.getElementById('built-translation').innerText = '翻译：(暂无组合)';
+        }
+
+        function updateBuiltTranslation() {
+            if (builtSentenceList.length === 0) return;
+            const translations = builtSentenceList.map(b => b.cn);
+            document.getElementById('built-translation').innerText = `翻译：${translations.join(' ')}`;
+        }
+
+        function speakBuiltSentence() {
+            if (builtSentenceList.length === 0) {
+                triggerToastAlert("积木板空空如也，快加上几个单词拼起来吧！", "🧱");
+                return;
+            }
+            const speechText = builtSentenceList.map(b => b.minion).join(' ');
+            speakTextWithPitch(speechText);
+        }
+
+        // SECTION 4: THE LEVEL QUIZ SYSTEM
+        let quizQuestions = [];
+        let currentQuestionIdx = 0;
+        let score = 0;
+
+        function initQuizData() {
+            quizQuestions = [
+                {
+                    q: "最经典的日常打招呼「你好！」在小黄人语中怎么说？",
+                    options: [
+                        { text: "A. Poopaye!", correct: false },
+                        { text: "B. Bello!", correct: true },
+                        { text: "C. Kampai!", correct: false },
+                        { text: "D. Sí!", correct: false }
+                    ]
+                },
+                {
+                    q: "当我们深情表白「我们爱你/我爱你」时，该说哪句？",
+                    options: [
+                        { text: "A. Underwear!", correct: false },
+                        { text: "B. Para tu, banana!", correct: false },
+                        { text: "C. Tulaliloo ti amo", correct: true },
+                        { text: "D. Me want banana!", correct: false }
+                    ]
+                },
+                {
+                    q: "小黄人魔性模仿消防警报器「着火了！/ 紧急情况！」的标志性喊声是？",
+                    options: [
+                        { text: "A. Bee-do! Bee-do!", correct: true },
+                        { text: "B. Boom! Boom!", correct: false },
+                        { text: "C. Wakey wakey!", correct: false },
+                        { text: "D. Sa la ka!", correct: false }
+                    ]
+                },
+                {
+                    q: "小黄人常借用西班牙语「Para tu」来表达什么？",
+                    options: [
+                        { text: "A. 我们走吧", correct: false },
+                        { text: "B. 老板再见", correct: false },
+                        { text: "C. 给你 / 为你", correct: true },
+                        { text: "D. 肚子饿了", correct: false }
+                    ]
+                },
+                {
+                    q: "「Muak muak muak!」在小黄人世界里通常代表什么动作？",
+                    options: [
+                        { text: "A. 大口吃香蕉", correct: false },
+                        { text: "B. 亲亲亲 / 接吻", correct: true },
+                        { text: "C. 跌倒滑稽声", correct: false },
+                        { text: "D. 奔跑快溜", correct: false }
+                    ]
+                },
+                {
+                    q: "如果你听见小黄人在喊「Bananonina!」，他们其实在吐槽什么？",
+                    options: [
+                        { text: "A. 难看！/ 丑！", correct: true },
+                        { text: "B. 太美味了！", correct: false },
+                        { text: "C. 这香蕉太大了！", correct: false },
+                        { text: "D. 危险快跑！", correct: false }
+                    ]
+                },
+                {
+                    q: "小黄人口中的「Gelato!」对应的是什么人间美味？",
+                    options: [
+                        { text: "A. 木瓜", correct: false },
+                        { text: "B. 苹果", correct: false },
+                        { text: "C. 冰淇淋", correct: true },
+                        { text: "D. 巧克力蛋糕", correct: false }
+                    ]
+                },
+                {
+                    q: "当计划圆满落幕或成功得手，小黄人最喜欢拉风地展示成果喊道：",
+                    options: [
+                        { text: "A. Whaaa?!", correct: false },
+                        { text: "B. Ta-da!", correct: true },
+                        { text: "C. Tick-tock!", correct: false },
+                        { text: "D. Lento, lento!", correct: false }
+                    ]
+                },
+                {
+                    q: "「No banana? Whaaa?!」表达了小黄人怎样的心情？",
+                    options: [
+                        { text: "A. 找到大量香蕉，高兴欢呼", correct: false },
+                        { text: "B. 没有香蕉吃？极度震惊与不可思议", correct: true },
+                        { text: "C. 老板把香蕉藏起来了", correct: false },
+                        { text: "D. 邀请朋友吃木瓜", correct: false }
+                    ]
+                },
+                {
+                    q: "根据小黄人语快速造句规则，将「我想要香蕉！」拼写出来的经典表达是？",
+                    options: [
+                        { text: "A. Looka me banana!", correct: false },
+                        { text: "B. Me want banana!", correct: true },
+                        { text: "C. Go banana mission!", correct: false },
+                        { text: "D. One banana, para tu!", correct: false }
+                    ]
+                }
+            ];
+        }
+
+        function startQuiz() {
+            currentQuestionIdx = 0;
+            score = 0;
+            document.getElementById('quiz-start-panel').classList.add('hidden');
+            document.getElementById('quiz-end-panel').classList.add('hidden');
+            document.getElementById('quiz-game-panel').classList.remove('hidden');
+            loadQuizQuestion();
+        }
+
+        function loadQuizQuestion() {
+            const qData = quizQuestions[currentQuestionIdx];
+            document.getElementById('quiz-index').innerText = currentQuestionIdx + 1;
+            document.getElementById('quiz-score').innerText = score;
+            document.getElementById('quiz-question').innerText = qData.q;
+
+            const progressPct = ((currentQuestionIdx + 1) / quizQuestions.length) * 100;
+            document.getElementById('quiz-progress-bar').style.width = `${progressPct}%`;
+
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+
+            qData.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "w-full p-4 border-2 border-gray-200 hover:border-yellow-400 hover:bg-yellow-50 rounded-2xl text-left font-bold text-gray-700 transition flex justify-between items-center";
+                btn.innerHTML = `<span>${opt.text}</span> <span class="quiz-arrow opacity-0 transition">➜</span>`;
+                btn.onclick = () => selectQuizOption(opt.correct, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectQuizOption(isCorrect, element) {
+            // Disable further clicks
+            const options = document.getElementById('quiz-options').querySelectorAll('button');
+            options.forEach(opt => opt.disabled = true);
+
+            if (isCorrect) {
+                element.className = "w-full p-4 border-2 border-green-500 bg-green-50 rounded-2xl text-left font-bold text-green-800 transition flex justify-between items-center";
+                element.querySelector('.quiz-arrow').innerHTML = "✅";
+                element.querySelector('.quiz-arrow').classList.remove('opacity-0');
+                score += 10;
+                playBeep(880, 0.15);
+            } else {
+                element.className = "w-full p-4 border-2 border-red-500 bg-red-50 rounded-2xl text-left font-bold text-red-800 transition flex justify-between items-center";
+                element.querySelector('.quiz-arrow').innerHTML = "❌";
+                element.querySelector('.quiz-arrow').classList.remove('opacity-0');
+
+                // Hilariously highlight correct one too
+                const qData = quizQuestions[currentQuestionIdx];
+                const correctIdx = qData.options.findIndex(o => o.correct);
+                const correctBtn = options[correctIdx];
+                correctBtn.className = "w-full p-4 border-2 border-green-500 bg-green-50 rounded-2xl text-left font-bold text-green-800 transition flex justify-between items-center";
+                correctBtn.querySelector('.quiz-arrow').innerHTML = "✅";
+                correctBtn.querySelector('.quiz-arrow').classList.remove('opacity-0');
+
+                playBeep(220, 0.3);
+            }
+
+            // Small delay to progress
+            setTimeout(() => {
+                currentQuestionIdx++;
+                if (currentQuestionIdx < quizQuestions.length) {
+                    loadQuizQuestion();
+                } else {
+                    endQuiz();
+                }
+            }, 1200);
+        }
+
+        function endQuiz() {
+            document.getElementById('quiz-game-panel').classList.add('hidden');
+            document.getElementById('quiz-end-panel').classList.remove('hidden');
+
+            document.getElementById('quiz-final-score').innerText = score;
+
+            let badge = '';
+            let desc = '';
+            let emoji = '';
+
+            if (score <= 30) {
+                badge = '🌱 香蕉萌新';
+                desc = '你刚刚进入小黄人的世界。听到「Bello」还会一脸茫然！快去多翻翻大字典认识点水果词汇吧。';
+                emoji = '🍌';
+            } else if (score <= 70) {
+                badge = '🎒 精英预备兵';
+                desc = '不错嘛！你已经能熟练识别大部分食物词和拟声表情，足以在格鲁的地下实验基地做个称职的打工人！';
+                emoji = '🧪';
+            } else {
+                badge = '👑 终极香蕉领袖 (Banana Lord)';
+                desc = '天呐！你对小黄人语的掌握已经神乎其技，能和Bob与Kevin谈笑风生。格鲁都要退避三舍，你才是小黄人真正的精神首领！';
+                emoji = '🏆';
+            }
+
+            document.getElementById('quiz-badge').innerText = badge;
+            document.getElementById('quiz-result-desc').innerText = desc;
+            document.getElementById('quiz-result-emoji').innerText = emoji;
+        }
+    </script>
+</body>
+</html>
